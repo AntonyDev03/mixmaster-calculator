@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div class="flex flex-col text-center p-10 h-[180px] bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+        <h1 class="font-bold text-3xl">MixMaster DIY</h1>
+        <h2 class="text-xl">Calcolatore</h2>
+    </div>
+
+    <div class="flex flex-col items-center justify-center p-10">
+        <input type="text" id="input" class="border p-2 m-4 w-full" placeholder="ml Desiderati">
+        <input type="text" id="nicotine" class="border p-2 m-4 w-full" placeholder="mg Nicotina (mg/ml)">
+        <input type="text" id="flavor" class="border p-2 m-4 w-full" placeholder="Percentuale Aroma (%)">
+        <button id="calculate" class="bg-blue-500 text-white p-2 m-4 w-full hover:bg-blue-700 transition duration-300">Calcola</button>
+        
+    </div>
+
+    <div class="flex flex-col items-center justify-center p-10">
+        <h1 class="font-bold text-xl p-4">Risultati:</h1>
+        <div id="results" class="border p-4 w-full">
+            <p id="nicotineResult"></p>
+            <p id="flavorResult"></p>
+            <p id="baseResult"></p>
+    </div>
+
+<script>
+    document.getElementById('calculate').addEventListener('click', function() {
+        // 1. Leggiamo i numeri. Aggiungiamo "|| 0" per sicurezza: se la casella è vuota, passa 0.
+        const ml = parseFloat(document.getElementById('input').value) || 0;
+        const nico = parseFloat(document.getElementById('nicotine').value) || 0;
+        const aroma = parseFloat(document.getElementById('flavor').value) || 0;
+
+        let mlAromaRichiesti = (ml * aroma) / 100;
+        let mlNicotinaRichiesti = (ml * nico) / 20; // 20mg/ml è la concentrazione della nicotina
+        let spazioOccupato = mlAromaRichiesti + mlNicotinaRichiesti;
+
+        if (spazioOccupato > ml) {
+            alert('La somma dei componenti supera il totale richiesto. Ricalcola i valori.');
+            return;
+        }
+
+
+        // 2. Chiamiamo l'API usando ESATTAMENTE i nomi che views.py si aspetta
+        const urlAPI = `calcolatore/?ml_richiesti=${ml}&nico_target=${nico}&percentuale_aroma=${aroma}`;
+
+        fetch(urlAPI)
+                .then(response => response.json())
+                .then(data => {
+                    // 3. Stampiamo i risultati usando ESATTAMENTE i nomi in uscita da logic.py
+                    document.getElementById('nicotineResult').textContent = `Nicotina (20mg/ml): ${data.ml_nicotina.toFixed(2)} ml`;
+                    document.getElementById('flavorResult').textContent = `Aroma: ${data.ml_aroma.toFixed(2)} ml`;
+                    document.getElementById('baseResult').textContent = `Base Neutra: ${data.ml_base_neutra.toFixed(2)} ml`;
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    alert('Errore di comunicazione con il calcolatore.');
+                });
+        
+        let nicotineResult = parseFloat(document.getElementById('nicotineResult').textContent) || 0;
+        let flavorResult = parseFloat(document.getElementById('flavorResult').textContent) || 0;
+        let baseResult = parseFloat(document.getElementById('baseResult').textContent) || 0;
+        let mlTotale = nicotineResult + flavorResult + baseResult;
+        
+    });
+</script>
+</body>
+</html>
